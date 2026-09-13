@@ -60,7 +60,7 @@ logging:
     com.bubli: DEBUG
 
 cors:
-  allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://bubli.n-e.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:5173,http://localhost:1420}
+  allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://my-bubli.kro.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:5173,http://localhost:1420}
 
 sentry:
   dsn: https://5a8ab4c07c01b134013be7980e925dff@o4511697492180992.ingest.us.sentry.io/4511697499521024

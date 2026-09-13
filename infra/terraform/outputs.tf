@@ -4,8 +4,13 @@ output "vpc_id" {
 }
 
 output "ec2_public_ip" {
-  description = "EC2 public IP (use this for EC2_HOST secret)"
-  value       = aws_instance.app.public_ip
+  description = "Elastic IP assigned to EC2 (use this for DNS and EC2_HOST secret)"
+  value       = aws_eip.app.public_ip
+}
+
+output "ec2_elastic_ip" {
+  description = "Elastic IP assigned to EC2"
+  value       = aws_eip.app.public_ip
 }
 
 output "ec2_instance_id" {

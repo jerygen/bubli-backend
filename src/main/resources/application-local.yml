@@ -56,4 +56,4 @@ jwt:
   refresh-token-expire-ms: ${JWT_REFRESH_TOKEN_EXPIRE_MS:1209600000}
 
 cors:
-  allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://bubli.n-e.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:3791,http://localhost:3792,http://localhost:5173,http://localhost:1420}
+  allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://my-bubli.kro.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:3791,http://localhost:3792,http://localhost:5173,http://localhost:1420}

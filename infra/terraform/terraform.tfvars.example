@@ -3,13 +3,13 @@
 
 aws_region        = "ap-northeast-2"
 project_name      = "bubli"
-key_name          = "bubli-key"
+key_name          = "my-bubli"
 ec2_instance_type = "t3.small"
 rds_instance_type = "db.t3.micro"
 
-db_name     = "bublidb"
+db_name     = "bubli"
 db_username = "bubli"
 db_password = "bubli1234"
 
 # S3 bucket names must be globally unique across all AWS accounts
-s3_bucket_name = "bubli-storage-CHANGE_ME"
+s3_bucket_name = "bubli-storage-my-aws"

@@ -16,7 +16,7 @@ public class SecurityConfigCorsTest {
         ReflectionTestUtils.setField(
                 securityConfig,
                 "allowedOriginPatterns",
-                "https://bubli.n-e.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000"
+                "https://my-bubli.kro.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000"
         );
 
         for (String origin : new String[] { "tauri://localhost", "http://tauri.localhost" }) {

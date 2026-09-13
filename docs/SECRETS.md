@@ -51,10 +51,10 @@
 |---|---|---|
 | `GOOGLE_OAUTH_CLIENT_ID` | Google 로그인 OAuth 클라이언트 ID | Google Cloud Console → OAuth 2.0 Client |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google 로그인 OAuth 클라이언트 보안 비밀번호 | 위 클라이언트 상세 화면 |
-| `GOOGLE_OAUTH_REDIRECT_URI` | 로그인 후 프론트 콜백 주소 | `https://bubli.n-e.kr/auth/callback` |
+| `GOOGLE_OAUTH_REDIRECT_URI` | 로그인 후 프론트 콜백 주소 | `https://my-bubli.kro.kr/auth/callback` |
 | `GOOGLE_CALENDAR_CLIENT_ID` | Google Calendar 연동 클라이언트 ID, 로그인과 같으면 같은 값을 등록 | Google OAuth와 같은 클라이언트 사용 가능 |
 | `GOOGLE_CALENDAR_CLIENT_SECRET` | Google Calendar 연동 클라이언트 보안 비밀번호, 로그인과 같으면 같은 값을 등록 | Google OAuth와 같은 클라이언트 사용 가능 |
-| `GOOGLE_CALENDAR_REDIRECT_URI` | Calendar 연결 후 프론트 콜백 주소 | `https://bubli.n-e.kr/calendar/google/callback` |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | Calendar 연결 후 프론트 콜백 주소 | `https://my-bubli.kro.kr/calendar/google/callback` |
 
 ---
 

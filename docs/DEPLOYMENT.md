@@ -18,7 +18,7 @@
 - **EC2 키페어**: AWS Console → EC2 → 키 페어 → 키 페어 생성에서 미리 만들어두고 `.pem` 파일을 안전하게 보관하세요.
   > terraform은 키 페어를 **만들지 않습니다.** `variables.tf`의 `key_name` 기본값은 `bubli-key`인데, 같은 이름의 키 페어가 AWS에 이미 존재해야 `terraform apply`가 성공합니다.
 - **Docker Hub 계정**: `bubli-backend`, `bubli-frontend` 이미지를 올릴 계정과 Access Token (Docker Hub → Account Settings → Security → New Access Token)
-- **도메인**: 예) `bubli.n-e.kr`. EC2 퍼블릭 IP가 나오기 전까지는 A 레코드를 설정할 수 없으니, 3번(terraform apply) 이후에 등록합니다.
+- **도메인**: `my-bubli.kro.kr`. EC2 퍼블릭 IP가 나오기 전까지는 A 레코드를 설정할 수 없으니, 3번(terraform apply) 이후에 등록합니다.
 - **Google OAuth 클라이언트** (로그인용, 필요시 Calendar 연동용 별도 클라이언트)
 - **LiveKit Cloud 프로젝트** (API Key/Secret, 서버 URL)
 
@@ -163,7 +163,7 @@ cp infra/nginx/nginx.http-only.conf infra/nginx/nginx.conf
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-도메인 A 레코드를 EC2 퍼블릭 IP로 미리 걸어두고, DNS 전파가 끝났는지 확인하세요 (`dig bubli.n-e.kr` 또는 `nslookup`). 전파가 안 끝난 상태로 다음 단계(certbot)를 진행하면 ACME 챌린지가 실패합니다.
+도메인 A 레코드를 EC2 퍼블릭 IP로 미리 걸어두고, DNS 전파가 끝났는지 확인하세요 (`dig my-bubli.kro.kr` 또는 `nslookup`). 전파가 안 끝난 상태로 다음 단계(certbot)를 진행하면 ACME 챌린지가 실패합니다.
 
 `http://<도메인>`으로 접속해 frontend/backend가 정상 응답하는지 확인한 뒤 8번으로 넘어갑니다.
 
@@ -174,11 +174,11 @@ docker compose -f docker-compose.prod.yml up -d
 ```bash
 docker compose -f docker-compose.prod.yml run --rm certbot certonly \
   --webroot -w /var/www/certbot \
-  -d bubli.n-e.kr \
+  -d my-bubli.kro.kr \
   --email <담당자 이메일> --agree-tos --no-eff-email
 ```
 
-성공하면 `/etc/letsencrypt/live/bubli.n-e.kr/`에 인증서가 생깁니다 (compose의 `certbot-etc` 볼륨에 저장되어 nginx 컨테이너와 공유됨).
+성공하면 `/etc/letsencrypt/live/my-bubli.kro.kr/`에 인증서가 생깁니다 (compose의 `certbot-etc` 볼륨에 저장되어 nginx 컨테이너와 공유됨).
 
 > `docker-compose.prod.yml`의 `certbot` 서비스 자체 entrypoint(`certbot renew` 반복)는 **갱신 전용**입니다. 최초 발급은 반드시 위처럼 `certonly`를 직접 실행해야 합니다.
 

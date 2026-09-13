@@ -68,7 +68,7 @@ docker compose --env-file .env.naver -f docker-compose.prod.yml -f docker-compos
 DNS A 레코드가 `101.79.29.236`을 가리키는 것을 확인한 다음 인증서를 발급한다.
 
 ```bash
-docker compose --env-file .env.naver -f docker-compose.prod.yml -f docker-compose.naver.yml run --rm --entrypoint certbot certbot certonly --webroot -w /var/www/certbot -d bubli.n-e.kr --email CHANGE_ME --agree-tos --no-eff-email
+docker compose --env-file .env.naver -f docker-compose.prod.yml -f docker-compose.naver.yml run --rm --entrypoint certbot certbot certonly --webroot -w /var/www/certbot -d my-bubli.kro.kr --email CHANGE_ME --agree-tos --no-eff-email
 ```
 
 발급 후 `.env.naver`를 다음과 같이 변경하고 Nginx를 재생성한다.

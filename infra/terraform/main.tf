@@ -248,6 +248,18 @@ resource "aws_instance" "app" {
   tags = { Name = "${var.project_name}-app" }
 }
 
+# 도메인 DNS가 EC2 재시작 후에도 바뀌지 않도록 고정 공인 IP를 할당한다.
+resource "aws_eip" "app" {
+  domain = "vpc"
+
+  tags = { Name = "${var.project_name}-app-eip" }
+}
+
+resource "aws_eip_association" "app" {
+  instance_id   = aws_instance.app.id
+  allocation_id = aws_eip.app.id
+}
+
 # ============================================================
 # RDS PostgreSQL
 # ============================================================

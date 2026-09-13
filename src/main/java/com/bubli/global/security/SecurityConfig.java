@@ -35,7 +35,7 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final ErrorResponseFactory errorResponseFactory;
 
-    @Value("${cors.allowed-origin-patterns:https://bubli.n-e.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:5173,http://localhost:1420}")
+    @Value("${cors.allowed-origin-patterns:https://my-bubli.kro.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:5173,http://localhost:1420}")
     private String allowedOriginPatterns;
 
     @Bean
