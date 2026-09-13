@@ -26,12 +26,17 @@ curl http://localhost:8080/actuator/health
 
 ## 3. AI까지 같이 쓰고 싶을 때
 
-Bedrock 기반 AI 기능이 필요하면 `SPRING_PROFILES_ACTIVE=local,ai`로 실행하세요.
+Bedrock 기반 AI 기능이 필요하면 `local` 프로필을 유지한 채 AI 관련 환경변수를 설정하세요.
 
 예시:
 
 ```bash
-$env:SPRING_PROFILES_ACTIVE = "local,ai"
+$env:SPRING_PROFILES_ACTIVE = "local"
+$env:AI_CHAT_PROVIDER = "bedrock-converse"
+$env:AI_EMBEDDING_PROVIDER = "bedrock-titan"
+$env:AI_VECTORSTORE_TYPE = "pgvector"
+$env:AGENT_EXECUTION_MODE = "llm"
+$env:AGENT_DISPATCH_ADAPTER = "redis"
 docker compose up -d
 ```
 
@@ -49,5 +54,5 @@ docker compose down -v
 
 ## 5. 선택 사항
 
-`application-secret.yml.example`은 실제 Google OAuth, LiveKit 값을 넣고 싶을 때만 복사해서 사용하세요.
+Google OAuth, LiveKit 같은 실제 연동값은 로컬 셸 환경변수 또는 별도 비밀 관리 도구로 주입하세요.
 로컬 개발만 할 거면 기본값으로도 시작할 수 있습니다.

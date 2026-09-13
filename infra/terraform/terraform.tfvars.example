@@ -9,7 +9,7 @@ rds_instance_type = "db.t3.micro"
 
 db_name     = "bubli"
 db_username = "bubli"
-db_password = "bubli1234"
+# RDS master password is generated and stored by AWS Secrets Manager.
 
 # S3 bucket names must be globally unique across all AWS accounts
 s3_bucket_name = "bubli-storage-my-aws"

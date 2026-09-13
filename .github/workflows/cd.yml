@@ -66,19 +66,35 @@ jobs:
     steps:
       - name: Deploy backend to AWS EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+          LIVEKIT_SERVER_URL: ${{ secrets.LIVEKIT_SERVER_URL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          LETSENCRYPT_EMAIL: myksphone2001@gmail.com
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 20m
+          envs: DEPLOY_IMAGE_TAG,DOCKER_USERNAME,GOOGLE_OAUTH_CLIENT_ID,GOOGLE_OAUTH_CLIENT_SECRET,LIVEKIT_API_KEY,LIVEKIT_API_SECRET,LIVEKIT_SERVER_URL,SENTRY_DSN,LETSENCRYPT_EMAIL
           script: |
             set -e
             cd ~/bubli-backend
             git fetch origin ${{ github.event.workflow_run.head_sha || github.sha }}
             git checkout --detach ${{ github.event.workflow_run.head_sha || github.sha }}
-            export IMAGE_TAG=${{ github.event.workflow_run.head_sha || github.sha }}
-            docker compose --env-file .env.aws -f docker-compose.prod.yml -f docker-compose.aws.yml pull backend
-            docker compose --env-file .env.aws -f docker-compose.prod.yml -f docker-compose.aws.yml --profile observability up -d --no-build --force-recreate backend
+            ./scripts/render-aws-env.sh
+            docker compose --env-file .env.aws -f docker-compose.prod.yml -f docker-compose.aws.yml --profile observability pull
+            docker compose --env-file .env.aws -f docker-compose.prod.yml -f docker-compose.aws.yml --profile observability up -d --no-build --force-recreate
+            if ! docker exec bubli-certbot test -f /etc/letsencrypt/live/my-bubli.kro.kr/fullchain.pem; then
+              docker exec bubli-certbot certbot certonly --webroot --webroot-path /var/www/certbot --email "$LETSENCRYPT_EMAIL" --agree-tos --no-eff-email --non-interactive --keep-until-expiring --domain my-bubli.kro.kr
+              ./scripts/render-aws-env.sh
+              docker compose --env-file .env.aws -f docker-compose.prod.yml -f docker-compose.aws.yml up -d --no-build --force-recreate nginx
+            fi
             docker image prune -f
 
   deploy-naver:

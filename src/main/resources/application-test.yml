@@ -3,6 +3,13 @@ spring:
     activate:
       on-profile: test
 
+  ai:
+    model:
+      chat: none
+      embedding: none
+    vectorstore:
+      type: none
+
   jpa:
     hibernate:
       ddl-auto: validate

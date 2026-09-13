@@ -19,13 +19,23 @@ output "ec2_instance_id" {
 }
 
 output "rds_endpoint" {
-  description = "RDS endpoint hostname (use this for RDS_HOSTNAME secret)"
+  description = "RDS endpoint hostname (injected into .env.aws automatically at deployment)"
   value       = aws_db_instance.postgres.address
 }
 
 output "rds_port" {
   description = "RDS port"
   value       = aws_db_instance.postgres.port
+}
+
+output "rds_master_secret_arn" {
+  description = "RDS-managed credential secret ARN (readable by the EC2 role only)"
+  value       = aws_db_instance.postgres.master_user_secret[0].secret_arn
+}
+
+output "app_runtime_secret_arn" {
+  description = "Application runtime secret ARN (initialized by EC2 on first deployment)"
+  value       = aws_secretsmanager_secret.app_runtime.arn
 }
 
 output "s3_bucket_name" {

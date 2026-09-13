@@ -26,6 +26,8 @@ services:
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
       LIVEKIT_SERVER_URL: ${LIVEKIT_SERVER_URL}
       CORS_ALLOWED_ORIGIN_PATTERNS: ${CORS_ALLOWED_ORIGIN_PATTERNS:-https://my-bubli.kro.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:5173,http://localhost:1420}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_SEND_DEFAULT_PII: ${SENTRY_SEND_DEFAULT_PII:-false}
       AGENT_EXECUTION_MODE: ${AGENT_EXECUTION_MODE:-llm}
       AGENT_DISPATCH_ADAPTER: ${AGENT_DISPATCH_ADAPTER:-redis}
       AI_CHAT_PROVIDER: ${AI_CHAT_PROVIDER:-bedrock-converse}

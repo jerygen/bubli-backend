@@ -166,7 +166,7 @@ resource "aws_security_group" "rds" {
 }
 
 # ============================================================
-# IAM (EC2 → S3)
+# IAM (EC2 → AWS services)
 # ============================================================
 
 resource "aws_iam_role" "ec2" {
@@ -211,6 +211,98 @@ resource "aws_iam_role_policy_attachment" "ec2_s3" {
   policy_arn = aws_iam_policy.ec2_s3.arn
 }
 
+# Spring AI가 사용하는 Claude 채팅과 Titan 임베딩 모델에만 추론 권한을 부여한다.
+# `apac.*` inference profile은 APAC 내 여러 리전으로 요청을 분산할 수 있다.
+resource "aws_iam_policy" "ec2_bedrock_inference" {
+  name        = "${var.project_name}-ec2-bedrock-inference-policy"
+  description = "Allow EC2 to invoke Bubli's Bedrock chat and embedding models"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "InvokeBubliModels"
+        Effect = "Allow"
+        Action = [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream"
+        ]
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/amazon.titan-embed-text-v2:0",
+          "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0",
+          "arn:aws:bedrock:*:*:inference-profile/apac.anthropic.claude-3-haiku-20240307-v1:0"
+        ]
+      },
+      {
+        Sid      = "ReadBubliInferenceProfile"
+        Effect   = "Allow"
+        Action   = "bedrock:GetInferenceProfile"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_bedrock_inference" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = aws_iam_policy.ec2_bedrock_inference.arn
+}
+
+# RDS가 Secrets Manager에 관리하는 마스터 비밀번호는 EC2 역할만 읽는다.
+resource "aws_iam_policy" "ec2_rds_master_secret" {
+  name        = "${var.project_name}-ec2-rds-master-secret-policy"
+  description = "Allow EC2 to read the RDS-managed database credential"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ]
+      Resource = aws_db_instance.postgres.master_user_secret[0].secret_arn
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_rds_master_secret" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = aws_iam_policy.ec2_rds_master_secret.arn
+}
+
+# JWT와 Grafana 비밀번호는 첫 배포 때 EC2가 생성해 이 빈 시크릿에 보관한다.
+resource "aws_secretsmanager_secret" "app_runtime" {
+  name                    = "${var.project_name}/app-runtime"
+  description             = "Bubli application secrets generated on first deployment"
+  recovery_window_in_days = 7
+
+  tags = { Name = "${var.project_name}-app-runtime" }
+}
+
+resource "aws_iam_policy" "ec2_app_runtime_secret" {
+  name        = "${var.project_name}-ec2-app-runtime-secret-policy"
+  description = "Allow EC2 to initialize and read Bubli runtime secrets"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:PutSecretValue"
+      ]
+      Resource = aws_secretsmanager_secret.app_runtime.arn
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_app_runtime_secret" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = aws_iam_policy.ec2_app_runtime_secret.arn
+}
+
 resource "aws_iam_instance_profile" "ec2" {
   name = "${var.project_name}-ec2-profile"
   role = aws_iam_role.ec2.name
@@ -236,13 +328,31 @@ resource "aws_instance" "app" {
   user_data = <<-EOF
     #!/bin/bash
     dnf update -y
-    dnf install -y docker
+    dnf install -y docker git jq openssl unzip
+    if ! command -v aws >/dev/null 2>&1; then
+      curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+      unzip -q /tmp/awscliv2.zip -d /tmp
+      /tmp/aws/install
+      rm -rf /tmp/aws /tmp/awscliv2.zip
+    fi
     systemctl enable docker
     systemctl start docker
     usermod -aG docker ec2-user
-    curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
-      -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+    mkdir -p /usr/local/lib/docker/cli-plugins
+    curl -fsSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+      -o /usr/local/lib/docker/cli-plugins/docker-compose
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+    ln -sf /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
+
+    cat > /home/ec2-user/.bubli-runtime.env <<'RUNTIME_ENV'
+    BUBLI_AWS_REGION=${var.aws_region}
+    BUBLI_DB_NAME=${var.db_name}
+    BUBLI_S3_BUCKET_NAME=${aws_s3_bucket.storage.bucket}
+    BUBLI_RDS_SECRET_ARN=${aws_db_instance.postgres.master_user_secret[0].secret_arn}
+    BUBLI_APP_RUNTIME_SECRET_ARN=${aws_secretsmanager_secret.app_runtime.arn}
+    RUNTIME_ENV
+    chown ec2-user:ec2-user /home/ec2-user/.bubli-runtime.env
+    chmod 600 /home/ec2-user/.bubli-runtime.env
   EOF
 
   tags = { Name = "${var.project_name}-app" }
@@ -279,9 +389,9 @@ resource "aws_db_instance" "postgres" {
   allocated_storage = 20
   storage_type      = "gp3"
 
-  db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
+  db_name                     = var.db_name
+  username                    = var.db_username
+  manage_master_user_password = true
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]

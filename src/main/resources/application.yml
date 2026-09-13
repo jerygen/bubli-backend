@@ -2,16 +2,71 @@ spring:
   application:
     name: bubli-backend
 
+  http:
+    clients:
+      connect-timeout: 10s
+      read-timeout: 300s
+
   profiles:
     active: local
-    include: secret
 
   ai:
     model:
-      chat: none
-      embedding: none
+      chat: ${AI_CHAT_PROVIDER:none}
+      embedding: ${AI_EMBEDDING_PROVIDER:none}
+
+    bedrock:
+      aws:
+        region: ${AWS_REGION:ap-northeast-2}
+        timeout: ${BEDROCK_TIMEOUT:2m}
+        access-key: ${AWS_ACCESS_KEY_ID:}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:}
+        session-token: ${AWS_SESSION_TOKEN:}
+      converse:
+        chat:
+          options:
+            model: ${BEDROCK_CHAT_MODEL_ID:apac.anthropic.claude-3-haiku-20240307-v1:0}
+            temperature: ${BEDROCK_CHAT_TEMPERATURE:0.2}
+            max-tokens: ${BEDROCK_CHAT_MAX_TOKENS:3000}
+      titan:
+        embedding:
+          model: ${BEDROCK_EMBEDDING_MODEL_ID:amazon.titan-embed-text-v2:0}
+          input-type: TEXT
+
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: never
+      chat:
+        think: ${OLLAMA_THINK:false}
+        options:
+          model: ${OLLAMA_CHAT_MODEL:qwen3.5:2b-q4_K_M}
+          keep-alive: ${OLLAMA_KEEP_ALIVE:0}
+          num-ctx: ${OLLAMA_CHAT_NUM_CTX:1024}
+          num-batch: ${OLLAMA_CHAT_NUM_BATCH:8}
+          num-thread: ${OLLAMA_NUM_THREAD:2}
+          temperature: ${OLLAMA_CHAT_TEMPERATURE:0.2}
+      embedding:
+        options:
+          model: ${OLLAMA_EMBEDDING_MODEL:qwen3-embedding:0.6b}
+          keep-alive: ${OLLAMA_KEEP_ALIVE:0}
+          truncate: true
+          num-ctx: ${OLLAMA_NUM_CTX:1024}
+          num-batch: ${OLLAMA_NUM_BATCH:32}
+          num-gpu: ${OLLAMA_NUM_GPU:0}
+          num-thread: ${OLLAMA_NUM_THREAD:2}
+
     vectorstore:
-      type: none
+      type: ${AI_VECTORSTORE_TYPE:none}
+      pgvector:
+        initialize-schema: true
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: ${AI_EMBEDDING_DIMENSIONS:1024}
+        schema-name: public
+        table-name: vector_store
+        schema-validation: false
+        max-document-batch-size: 100
 
   jpa:
     open-in-view: false
@@ -33,7 +88,7 @@ spring:
       max-request-size: 50MB
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 management:
   endpoints:
@@ -63,5 +118,47 @@ cors:
   allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://my-bubli.kro.kr,tauri://localhost,http://tauri.localhost,http://localhost:3000,http://localhost:5173,http://localhost:1420}
 
 sentry:
-  dsn: https://5a8ab4c07c01b134013be7980e925dff@o4511697492180992.ingest.us.sentry.io/4511697499521024
-  send-default-pii: true
+  dsn: ${SENTRY_DSN:}
+  send-default-pii: ${SENTRY_SEND_DEFAULT_PII:false}
+
+bubli:
+  ai:
+    retry:
+      max-attempts: ${AI_RETRY_MAX_ATTEMPTS:3}
+      initial-delay: ${AI_RETRY_INITIAL_DELAY:1s}
+  rag:
+    smoke:
+      enabled: ${RAG_SMOKE_ENABLED:false}
+
+agent:
+  model-usage:
+    user-daily-limit: ${AGENT_MODEL_USER_DAILY_LIMIT:0}
+    job-type-daily-limit: ${AGENT_MODEL_JOB_TYPE_DAILY_LIMIT:0}
+  execution:
+    mode: ${AGENT_EXECUTION_MODE:local}
+  dispatch:
+    adapter: ${AGENT_DISPATCH_ADAPTER:in-memory}
+    redis:
+      queue-key: ${AGENT_REDIS_QUEUE_KEY:bubli:agent-jobs}
+    worker:
+      scheduler:
+        enabled: ${AGENT_WORKER_SCHEDULER_ENABLED:true}
+        fixed-delay-ms: ${AGENT_WORKER_SCHEDULER_FIXED_DELAY_MS:1000}
+      max-jobs-per-tick: ${AGENT_WORKER_MAX_JOBS_PER_TICK:5}
+    outbox:
+      scheduler:
+        enabled: ${AGENT_OUTBOX_SCHEDULER_ENABLED:true}
+        fixed-delay-ms: ${AGENT_OUTBOX_SCHEDULER_FIXED_DELAY_MS:5000}
+      max-retry-count: ${AGENT_OUTBOX_MAX_RETRY_COUNT:3}
+    retry:
+      scheduler:
+        enabled: ${AGENT_RETRY_SCHEDULER_ENABLED:false}
+        fixed-delay-ms: ${AGENT_RETRY_SCHEDULER_FIXED_DELAY_MS:60000}
+      max-retry-count: ${AGENT_JOB_MAX_RETRY_COUNT:3}
+  rag:
+    enabled: ${AGENT_RAG_ENABLED:true}
+    top-k: ${AGENT_RAG_TOP_K:5}
+    candidate-top-k: ${AGENT_RAG_CANDIDATE_TOP_K:40}
+    min-similarity: ${AGENT_RAG_MIN_SIMILARITY:0.72}
+    suggest-min-similarity: ${AGENT_RAG_SUGGEST_MIN_SIMILARITY:0.68}
+    personal-min-similarity: ${AGENT_RAG_PERSONAL_MIN_SIMILARITY:0.72}

@@ -40,12 +40,6 @@ variable "db_username" {
   default     = "bubli"
 }
 
-variable "db_password" {
-  description = "PostgreSQL master password (sensitive)"
-  type        = string
-  sensitive   = true
-}
-
 variable "s3_bucket_name" {
   description = "S3 bucket name for file storage (must be globally unique)"
   type        = string
